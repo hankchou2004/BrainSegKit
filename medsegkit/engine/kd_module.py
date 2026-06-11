@@ -4,7 +4,7 @@ Teacher is frozen; student is trained with:
     total_loss = seg_loss(student, label)
                + kd_weight * kd_loss(student, teacher)
 
-Supports all three KD types from brainsegkit.losses.kd:
+Supports all three KD types from medsegkit.losses.kd:
     "response"   — soft-label KD (Hinton 2015)
     "feature"    — intermediate feature alignment
     "contrastive"— InfoNCE-based CRD
@@ -23,10 +23,10 @@ from monai.metrics import DiceMetric, HausdorffDistanceMetric
 from monai.transforms import AsDiscrete
 from monai.data import decollate_batch
 
-from brainsegkit.models.registry import build_model
-from brainsegkit.losses.seg_losses import build_seg_loss
-from brainsegkit.losses.kd import ResponseKDLoss, FeatureKDLoss, ContrastiveKDLoss
-from brainsegkit.data.transforms import NUM_CLASSES
+from medsegkit.models.registry import build_model
+from medsegkit.losses.seg_losses import build_seg_loss
+from medsegkit.losses.kd import ResponseKDLoss, FeatureKDLoss, ContrastiveKDLoss
+from medsegkit.data.transforms import NUM_CLASSES
 
 
 class KDModule(L.LightningModule):

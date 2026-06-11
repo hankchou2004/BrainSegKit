@@ -3,9 +3,9 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "brainsegkit"
+name = "medsegkit"
 version = "0.1.0"
-description = "Brain segmentation research framework: UNet/UNet++/DynUNet/MedNeXt/UMamba/SAM + KD"
+description = "Medical image segmentation research framework: multi-dataset (brain MRI / abdominal CT), multi-model, knowledge distillation"
 requires-python = ">=3.10"
 dependencies = [
     "torch>=2.7.0",
@@ -26,8 +26,8 @@ dependencies = [
 umamba = ["mamba-ssm", "causal-conv1d"]
 sam    = ["segment-anything"]
 nnunet = ["nnunetv2"]
-all    = ["brainsegkit[umamba,sam,nnunet]"]
+all    = ["medsegkit[umamba,sam,nnunet]"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["brainsegkit*"]
+include = ["medsegkit*"]

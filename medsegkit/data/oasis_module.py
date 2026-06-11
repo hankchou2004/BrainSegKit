@@ -1,21 +1,16 @@
-"""Lightning DataModule for the BTCV abdominal CT segmentation dataset (13 organs).
+"""Lightning DataModule for the OASIS-1 brain MRI dataset (FreeSurfer labels).
 
-Directory layout expected:
+Directory layout expected (nnUNet-style, .nii.gz):
     dataset_root/
-        btcv/
-            Training/
-                img/    img{id}.nii.gz   (CT, HU int16)
-                label/  label{id}.nii.gz (0–13)
-            Testing/
-                img/    img{id}.nii.gz   (no labels)
+        oasis1_freesurfer/
+            imagesTr/  {subject}_0000.nii.gz   (train + val, T1)
+            labelsTr/  {subject}.nii.gz          (train + val, aseg — 41 classes)
+            imagesTs/  {subject}_0000.nii.gz
+            labelsTs/  {subject}.nii.gz
             splits.json
 
 Splits JSON format:
-    { "splits": { "train": ["0001", ...], "val": [...], "test": [...] } }
-
-IDs are zero-padded 4-digit strings (e.g. "0001").
-Training/val images live in Training/img & Training/label.
-Test images live in Testing/img (no labels available).
+    { "splits": { "train": [...], "val": [...], "test": [...] } }
 """
 
 from __future__ import annotations
@@ -26,26 +21,16 @@ from pathlib import Path
 import lightning as L
 from monai.data import CacheDataset, DataLoader
 
-from brainsegkit.data.btcv_transforms import build_btcv_transforms
-
-# BTCV organ class names (index = label value)
-BTCV_CLASSES = [
-    "Background",
-    "Spleen", "Right Kidney", "Left Kidney", "Gallbladder",
-    "Esophagus", "Liver", "Stomach", "Aorta",
-    "Inferior Vena Cava", "Portal Vein", "Pancreas",
-    "Right Adrenal Gland", "Left Adrenal Gland",
-]
+from medsegkit.data.transforms import build_transforms
 
 
-class BTCVDataModule(L.LightningDataModule):
-    """BTCV abdominal CT segmentation DataModule (14 classes including background).
+class OasisDataModule(L.LightningDataModule):
+    """OASIS-1 FreeSurfer segmentation DataModule (41-class aseg).
 
     Args:
-        dataset_root: Path to dataset/ (contains btcv/ subdir).
-        splits_json:  Path to splits.json inside btcv/.
+        dataset_root: Path to dataset/  (contains freesurfer/ subdir).
+        splits_json:  Path to splits.json.
         patch_size:   3-D crop size for training.
-        spacing:      Target voxel spacing (mm).
         batch_size:   Per-GPU batch size.
         num_workers:  DataLoader workers.
         cache_rate:   Fraction of dataset to cache in RAM (0.0–1.0).
@@ -54,38 +39,35 @@ class BTCVDataModule(L.LightningDataModule):
     def __init__(
         self,
         dataset_root: str   = "/home/hank/medical_segmention/dataset",
-        splits_json:  str   = "/home/hank/medical_segmention/dataset/btcv/splits.json",
-        patch_size:   tuple = (96, 96, 96),
-        spacing:      tuple = (1.5, 1.5, 2.0),
+        splits_json:  str   = "/home/hank/medical_segmention/dataset/oasis1_freesurfer/splits.json",
+        patch_size:   tuple = (128, 128, 128),
         batch_size:   int   = 2,
         num_workers:  int   = 4,
         cache_rate:   float = 0.1,
     ):
         super().__init__()
-        self.btcv_root   = Path(dataset_root) / "btcv"
+        self.fs_root     = Path(dataset_root) / "oasis1_freesurfer"
         self.splits_json = Path(splits_json)
         self.patch_size  = patch_size
-        self.spacing     = spacing
         self.batch_size  = batch_size
         self.num_workers = num_workers
         self.cache_rate  = cache_rate
 
     # ------------------------------------------------------------------
     def _load_split(self, split: str) -> list[dict]:
+        """Return list of {image, label} dicts for the requested split."""
+        img_dir = self.fs_root / ("imagesTr" if split in ("train", "val") else "imagesTs")
+        lbl_dir = self.fs_root / ("labelsTr" if split in ("train", "val") else "labelsTs")
+
         with open(self.splits_json) as f:
-            ids: list[str] = json.load(f)["splits"][split]
+            subject_ids: list[str] = json.load(f)["splits"][split]
 
         records = []
-        for sid in ids:
-            if split == "test":
-                image = self.btcv_root / "Testing" / "img" / f"img{sid}.nii.gz"
-                if image.exists():
-                    records.append({"image": str(image), "label": str(image)})
-            else:
-                image = self.btcv_root / "Training" / "img"   / f"img{sid}.nii.gz"
-                label = self.btcv_root / "Training" / "label" / f"label{sid}.nii.gz"
-                if image.exists() and label.exists():
-                    records.append({"image": str(image), "label": str(label)})
+        for sid in subject_ids:
+            image = img_dir / f"{sid}_0000.nii.gz"
+            label = lbl_dir / f"{sid}.nii.gz"
+            if image.exists() and label.exists():
+                records.append({"image": str(image), "label": str(label)})
         return records
 
     # ------------------------------------------------------------------
@@ -93,7 +75,7 @@ class BTCVDataModule(L.LightningDataModule):
         def _ds(split):
             return CacheDataset(
                 data=self._load_split(split),
-                transform=build_btcv_transforms(split, self.patch_size, self.spacing),
+                transform=build_transforms(split, self.patch_size),
                 cache_rate=self.cache_rate,
                 num_workers=self.num_workers,
             )

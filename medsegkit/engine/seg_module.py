@@ -18,9 +18,9 @@ from monai.metrics import DiceMetric, HausdorffDistanceMetric
 from monai.transforms import AsDiscrete
 from monai.data import decollate_batch
 
-from brainsegkit.losses.seg_losses import build_seg_loss
-from brainsegkit.models.registry import build_model
-from brainsegkit.data.transforms import NUM_CLASSES
+from medsegkit.losses.seg_losses import build_seg_loss
+from medsegkit.models.registry import build_model
+from medsegkit.data.transforms import NUM_CLASSES
 
 
 class SegModule(L.LightningModule):

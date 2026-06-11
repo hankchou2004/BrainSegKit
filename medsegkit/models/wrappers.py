@@ -1,4 +1,4 @@
-"""Wraps MONAI architectures into the BrainSegKit registry with OASIS1 defaults.
+"""Wraps MONAI architectures into the MedSegKit registry with OASIS1 defaults.
 
 All wrappers expose a unified signature:
     __init__(in_channels, out_channels, **extra)
@@ -18,7 +18,7 @@ from monai.networks.nets import (
     UNETR,
 )
 
-from brainsegkit.models.registry import register_model
+from medsegkit.models.registry import register_model
 
 # ---------------------------------------------------------------------------
 # Default channel/stride settings for 3-D brain MRI at ~1 mm isotropic

@@ -14,9 +14,9 @@ import argparse
 import torch
 import yaml
 
-from brainsegkit.data.oasis_module import OasisDataModule
-from brainsegkit.engine.seg_module import SegModule
-from brainsegkit.evaluation.metrics import evaluate_model, print_comparison_table
+from medsegkit.data.oasis_module import OasisDataModule
+from medsegkit.engine.seg_module import SegModule
+from medsegkit.evaluation.metrics import evaluate_model, print_comparison_table
 
 
 def main():

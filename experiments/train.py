@@ -1,4 +1,4 @@
-"""BrainSegKit training entry point.
+"""MedSegKit training entry point.
 
 Usage:
     python experiments/train.py --config configs/unet.yaml
@@ -20,9 +20,9 @@ from lightning.pytorch.callbacks import (
 )
 from lightning.pytorch.loggers import WandbLogger, TensorBoardLogger
 
-from brainsegkit.data.oasis_module import OasisDataModule
-from brainsegkit.engine.seg_module import SegModule
-from brainsegkit.engine.kd_module import KDModule
+from medsegkit.data.oasis_module import OasisDataModule
+from medsegkit.engine.seg_module import SegModule
+from medsegkit.engine.kd_module import KDModule
 
 
 def load_cfg(path: str) -> dict:
@@ -33,9 +33,9 @@ def load_cfg(path: str) -> dict:
 def build_logger(cfg: dict):
     exp = cfg.get("experiment", {})
     log_dir = exp.get("log_dir", "./logs")
-    name    = exp.get("name", "brainsegkit")
+    name    = exp.get("name", "medsegkit")
     try:
-        return WandbLogger(project="BrainSegKit", name=name, save_dir=log_dir)
+        return WandbLogger(project="MedSegKit", name=name, save_dir=log_dir)
     except Exception:
         return TensorBoardLogger(save_dir=log_dir, name=name)
 
@@ -80,7 +80,7 @@ def train_kd(cfg: dict, gpus: int):
 
 
 def _run(module, dm, cfg: dict, gpus: int):
-    exp_name = cfg.get("experiment", {}).get("name", "brainsegkit")
+    exp_name = cfg.get("experiment", {}).get("name", "medsegkit")
     log_dir  = cfg.get("experiment", {}).get("log_dir", "./logs")
     max_epochs = cfg["training"].get("max_epochs", 300)
 

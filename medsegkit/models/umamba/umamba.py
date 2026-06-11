@@ -9,8 +9,8 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 
-from brainsegkit.models.registry import register_model
-from brainsegkit.models.umamba.mamba_block import MambaBlock3D
+from medsegkit.models.registry import register_model
+from medsegkit.models.umamba.mamba_block import MambaBlock3D
 
 
 class ConvBlock(nn.Module):

@@ -17,7 +17,7 @@ from monai.metrics import (
 from monai.transforms import AsDiscrete
 from monai.data import decollate_batch
 
-from brainsegkit.data.transforms import NUM_CLASSES, ASEG_SRC
+from medsegkit.data.transforms import NUM_CLASSES, ASEG_SRC
 
 
 # Human-readable names for the 36 aseg classes
