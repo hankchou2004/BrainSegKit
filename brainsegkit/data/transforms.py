@@ -1,8 +1,7 @@
-"""MONAI transform pipelines for OASIS-1 brain MRI.
+"""MONAI transform pipeline for OASIS-1 brain MRI (FreeSurfer aseg labels).
 
-Two modalities are supported, both sharing the same T1 image:
-  freesurfer — aseg.mgz: 41 non-contiguous labels → remapped to 0–40
-  fsl         — *_fseg:  3 classes (1=CSF, 2=GM, 3=WM), already contiguous
+FreeSurfer aseg: 41 non-contiguous labels → remapped to 0–40.
+Label 255 (Unknown) is remapped to 0 (background).
 """
 
 from __future__ import annotations
@@ -39,31 +38,20 @@ FS_LABEL_DST = [
     16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
     31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 0,   # 255 → 0
 ]
-FS_NUM_CLASSES = 41   # 0 (bg) + 40 structures
 
-# ---------------------------------------------------------------------------
-# FSL segmentation: already contiguous (0=background, 1=CSF, 2=GM, 3=WM)
-# ---------------------------------------------------------------------------
-FSL_NUM_CLASSES = 4   # 0 (bg) + 3 tissue classes
-
-# Exported for use in SegModule / evaluation
-NUM_CLASSES_MAP = {
-    "freesurfer": FS_NUM_CLASSES,
-    "fsl":        FSL_NUM_CLASSES,
-}
+NUM_CLASSES = 41   # 0 (bg) + 40 structures
 
 
 def build_transforms(
     split:      str,
     patch_size: tuple = (128, 128, 128),
-    modality:   str   = "freesurfer",
     spacing:    tuple = (1.0, 1.0, 1.0),
 ) -> Compose:
     """Return a MONAI Compose pipeline for train / val / test.
 
     Keys expected in each data dict:
         "image" → path to *_0000.nii.gz  (T1)
-        "label" → path to *.nii.gz       (aseg or fseg)
+        "label" → path to *.nii.gz       (aseg)
     """
     base = [
         LoadImaged(keys=["image", "label"]),
@@ -74,17 +62,11 @@ def build_transforms(
             pixdim=spacing,
             mode=("bilinear", "nearest"),
         ),
-    ]
-
-    # Label remapping — FreeSurfer only (FSL labels already contiguous)
-    if modality == "freesurfer":
-        base.append(MapLabelValued(
+        MapLabelValued(
             keys=["label"],
             orig_labels=FS_LABEL_SRC,
             target_labels=FS_LABEL_DST,
-        ))
-
-    base += [
+        ),
         ScaleIntensityRangePercentilesd(
             keys=["image"], lower=1, upper=99,
             b_min=0.0, b_max=1.0, clip=True,

@@ -10,7 +10,6 @@ model:
 data:
   dataset_root: /home/hank/medical_segmention/dataset
   splits_json: /home/hank/medical_segmention/dataset/splits.json
-  modality: freesurfer
   patch_size: [128, 128, 128]
   batch_size: 2
   num_workers: 4

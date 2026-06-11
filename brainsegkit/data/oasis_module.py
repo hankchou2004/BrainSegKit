@@ -1,4 +1,4 @@
-"""Lightning DataModule for the OASIS-1 brain MRI dataset.
+"""Lightning DataModule for the OASIS-1 brain MRI dataset (FreeSurfer labels).
 
 Directory layout expected (nnUNet-style, .nii.gz):
     dataset_root/
@@ -7,15 +7,9 @@ Directory layout expected (nnUNet-style, .nii.gz):
             labelsTr/  {subject}.nii.gz          (train + val, aseg — 41 classes)
             imagesTs/  {subject}_0000.nii.gz
             labelsTs/  {subject}.nii.gz
-        fsl/
-            imagesTr/  {subject}_0000.nii.gz   (train + val, same T1)
-            labelsTr/  {subject}.nii.gz          (train + val, fseg — 3 classes)
-            imagesTs/  {subject}_0000.nii.gz
-            labelsTs/  {subject}.nii.gz
 
 Splits are read from splits.json:
     { "splits": { "train": [...], "val": [...], "test": [...] } }
-Both modalities share the same JSON.
 """
 
 from __future__ import annotations
@@ -28,16 +22,13 @@ from monai.data import CacheDataset, DataLoader
 
 from brainsegkit.data.transforms import build_transforms
 
-MODALITIES = ("freesurfer", "fsl")
-
 
 class OasisDataModule(L.LightningDataModule):
-    """OASIS-1 segmentation DataModule — supports FreeSurfer and FSL labels.
+    """OASIS-1 FreeSurfer segmentation DataModule (41-class aseg).
 
     Args:
-        dataset_root: Path to dataset/  (contains freesurfer/ and fsl/ subdirs).
-        splits_csv:   Path to oasis1_splits.csv.
-        modality:     "freesurfer" (41-class aseg) or "fsl" (3-class CSF/GM/WM).
+        dataset_root: Path to dataset/  (contains freesurfer/ subdir).
+        splits_json:  Path to splits.json.
         patch_size:   3-D crop size for training.
         batch_size:   Per-GPU batch size.
         num_workers:  DataLoader workers.
@@ -48,28 +39,24 @@ class OasisDataModule(L.LightningDataModule):
         self,
         dataset_root: str   = "/home/hank/medical_segmention/dataset",
         splits_json:  str   = "/home/hank/medical_segmention/dataset/splits.json",
-        modality:     str   = "freesurfer",
         patch_size:   tuple = (128, 128, 128),
         batch_size:   int   = 2,
         num_workers:  int   = 4,
         cache_rate:   float = 0.1,
     ):
         super().__init__()
-        if modality not in MODALITIES:
-            raise ValueError(f"modality must be one of {MODALITIES}, got '{modality}'")
-        self.modality_root = Path(dataset_root) / modality
-        self.splits_json   = Path(splits_json)
-        self.modality      = modality
-        self.patch_size    = patch_size
-        self.batch_size    = batch_size
-        self.num_workers   = num_workers
-        self.cache_rate    = cache_rate
+        self.fs_root     = Path(dataset_root) / "freesurfer"
+        self.splits_json = Path(splits_json)
+        self.patch_size  = patch_size
+        self.batch_size  = batch_size
+        self.num_workers = num_workers
+        self.cache_rate  = cache_rate
 
     # ------------------------------------------------------------------
     def _load_split(self, split: str) -> list[dict]:
         """Return list of {image, label} dicts for the requested split."""
-        img_dir = self.modality_root / ("imagesTr" if split in ("train", "val") else "imagesTs")
-        lbl_dir = self.modality_root / ("labelsTr" if split in ("train", "val") else "labelsTs")
+        img_dir = self.fs_root / ("imagesTr" if split in ("train", "val") else "imagesTs")
+        lbl_dir = self.fs_root / ("labelsTr" if split in ("train", "val") else "labelsTs")
 
         with open(self.splits_json) as f:
             subject_ids: list[str] = json.load(f)["splits"][split]
@@ -87,7 +74,7 @@ class OasisDataModule(L.LightningDataModule):
         def _ds(split):
             return CacheDataset(
                 data=self._load_split(split),
-                transform=build_transforms(split, self.patch_size, self.modality),
+                transform=build_transforms(split, self.patch_size),
                 cache_rate=self.cache_rate,
                 num_workers=self.num_workers,
             )
