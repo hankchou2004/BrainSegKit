@@ -11,7 +11,7 @@ model:
 
 data:
   dataset_root: /home/hank/medical_segmention/dataset
-  splits_csv: /home/hank/medical_segmention/oasis1_splits.csv
+  splits_json: /home/hank/medical_segmention/dataset/splits.json
   modality: fsl
   patch_size: [128, 128, 128]
   batch_size: 2

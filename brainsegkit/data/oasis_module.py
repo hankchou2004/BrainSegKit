@@ -13,14 +13,14 @@ Directory layout expected (nnUNet-style, .nii.gz):
             imagesTs/  {subject}_0000.nii.gz
             labelsTs/  {subject}.nii.gz
 
-Splits are read from a CSV with columns: oasis_id, split
-    split values: train | val | test
-Both modalities share the same CSV.
+Splits are read from splits.json:
+    { "splits": { "train": [...], "val": [...], "test": [...] } }
+Both modalities share the same JSON.
 """
 
 from __future__ import annotations
 
-import csv
+import json
 from pathlib import Path
 
 import lightning as L
@@ -47,7 +47,7 @@ class OasisDataModule(L.LightningDataModule):
     def __init__(
         self,
         dataset_root: str   = "/home/hank/medical_segmention/dataset",
-        splits_csv:   str   = "/home/hank/medical_segmention/oasis1_splits.csv",
+        splits_json:  str   = "/home/hank/medical_segmention/dataset/splits.json",
         modality:     str   = "freesurfer",
         patch_size:   tuple = (128, 128, 128),
         batch_size:   int   = 2,
@@ -58,7 +58,7 @@ class OasisDataModule(L.LightningDataModule):
         if modality not in MODALITIES:
             raise ValueError(f"modality must be one of {MODALITIES}, got '{modality}'")
         self.modality_root = Path(dataset_root) / modality
-        self.splits_csv    = Path(splits_csv)
+        self.splits_json   = Path(splits_json)
         self.modality      = modality
         self.patch_size    = patch_size
         self.batch_size    = batch_size
@@ -71,16 +71,15 @@ class OasisDataModule(L.LightningDataModule):
         img_dir = self.modality_root / ("imagesTr" if split in ("train", "val") else "imagesTs")
         lbl_dir = self.modality_root / ("labelsTr" if split in ("train", "val") else "labelsTs")
 
+        with open(self.splits_json) as f:
+            subject_ids: list[str] = json.load(f)["splits"][split]
+
         records = []
-        with open(self.splits_csv) as f:
-            for row in csv.DictReader(f):
-                if row["split"] != split:
-                    continue
-                sid   = row["oasis_id"]
-                image = img_dir / f"{sid}_0000.nii.gz"
-                label = lbl_dir / f"{sid}.nii.gz"
-                if image.exists() and label.exists():
-                    records.append({"image": str(image), "label": str(label)})
+        for sid in subject_ids:
+            image = img_dir / f"{sid}_0000.nii.gz"
+            label = lbl_dir / f"{sid}.nii.gz"
+            if image.exists() and label.exists():
+                records.append({"image": str(image), "label": str(label)})
         return records
 
     # ------------------------------------------------------------------
