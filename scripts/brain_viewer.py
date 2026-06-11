@@ -30,6 +30,7 @@ from pathlib import Path
 import nibabel as nib
 import numpy as np
 import matplotlib
+matplotlib.use("TkAgg")   # WSLg / X11 compatible
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 from matplotlib.colors import hsv_to_rgb
