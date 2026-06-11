@@ -2,13 +2,14 @@
 
 Directory layout expected (nnUNet-style, .nii.gz):
     dataset_root/
-        freesurfer/
+        oasis1_freesurfer/
             imagesTr/  {subject}_0000.nii.gz   (train + val, T1)
             labelsTr/  {subject}.nii.gz          (train + val, aseg — 41 classes)
             imagesTs/  {subject}_0000.nii.gz
             labelsTs/  {subject}.nii.gz
+            splits.json
 
-Splits are read from splits.json:
+Splits JSON format:
     { "splits": { "train": [...], "val": [...], "test": [...] } }
 """
 
@@ -38,14 +39,14 @@ class OasisDataModule(L.LightningDataModule):
     def __init__(
         self,
         dataset_root: str   = "/home/hank/medical_segmention/dataset",
-        splits_json:  str   = "/home/hank/medical_segmention/dataset/splits.json",
+        splits_json:  str   = "/home/hank/medical_segmention/dataset/oasis1_freesurfer/splits.json",
         patch_size:   tuple = (128, 128, 128),
         batch_size:   int   = 2,
         num_workers:  int   = 4,
         cache_rate:   float = 0.1,
     ):
         super().__init__()
-        self.fs_root     = Path(dataset_root) / "freesurfer"
+        self.fs_root     = Path(dataset_root) / "oasis1_freesurfer"
         self.splits_json = Path(splits_json)
         self.patch_size  = patch_size
         self.batch_size  = batch_size
