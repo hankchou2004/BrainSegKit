@@ -1,9 +1,11 @@
 """Lightning DataModule for the OASIS-1 brain MRI dataset.
 
-Directory layout expected:
-    data_root/
-        oasis1_freesurfer/{subject}/mri/T1.mgz
-        oasis1_freesurfer/{subject}/mri/aseg.mgz
+Directory layout expected (nnUNet-style, .nii.gz):
+    dataset_root/
+        imagesTr/  {subject}_0000.nii.gz   (train + val)
+        labelsTr/  {subject}.nii.gz         (train + val)
+        imagesTs/  {subject}_0000.nii.gz   (test)
+        labelsTs/  {subject}.nii.gz         (test)
 
 Splits are read from a CSV with columns: oasis_id, split
     split values: train | val | test
@@ -24,30 +26,30 @@ class OasisDataModule(L.LightningDataModule):
     """OASIS-1 FreeSurfer segmentation DataModule.
 
     Args:
-        data_root:   Path to brain_data/.
-        splits_csv:  Path to oasis1_splits.csv.
-        patch_size:  3-D crop size for training.
-        batch_size:  Per-GPU batch size.
-        num_workers: DataLoader workers.
-        cache_rate:  Fraction of dataset to cache in RAM (0.0–1.0).
+        dataset_root: Path to dataset/ (contains imagesTr/labelsTr/imagesTs/labelsTs).
+        splits_csv:   Path to oasis1_splits.csv.
+        patch_size:   3-D crop size for training.
+        batch_size:   Per-GPU batch size.
+        num_workers:  DataLoader workers.
+        cache_rate:   Fraction of dataset to cache in RAM (0.0–1.0).
     """
 
     def __init__(
         self,
-        data_root:   str  = "/home/hank/medical_segmention/brain_data",
-        splits_csv:  str  = "/home/hank/medical_segmention/oasis1_splits.csv",
-        patch_size:  tuple = (128, 128, 128),
-        batch_size:  int  = 2,
-        num_workers: int  = 4,
-        cache_rate:  float = 0.1,
+        dataset_root: str   = "/home/hank/medical_segmention/dataset",
+        splits_csv:   str   = "/home/hank/medical_segmention/oasis1_splits.csv",
+        patch_size:   tuple = (128, 128, 128),
+        batch_size:   int   = 2,
+        num_workers:  int   = 4,
+        cache_rate:   float = 0.1,
     ):
         super().__init__()
-        self.data_root   = Path(data_root)
-        self.splits_csv  = Path(splits_csv)
-        self.patch_size  = patch_size
-        self.batch_size  = batch_size
-        self.num_workers = num_workers
-        self.cache_rate  = cache_rate
+        self.dataset_root = Path(dataset_root)
+        self.splits_csv   = Path(splits_csv)
+        self.patch_size   = patch_size
+        self.batch_size   = batch_size
+        self.num_workers  = num_workers
+        self.cache_rate   = cache_rate
 
     # ------------------------------------------------------------------
     def _load_split(self, split: str) -> list[dict]:
@@ -58,9 +60,12 @@ class OasisDataModule(L.LightningDataModule):
                 if row["split"] != split:
                     continue
                 sid = row["oasis_id"]
-                mri_dir = self.data_root / "oasis1_freesurfer" / sid / "mri"
-                image = mri_dir / "T1.mgz"
-                label = mri_dir / "aseg.mgz"
+                if split in ("train", "val"):
+                    image = self.dataset_root / "imagesTr" / f"{sid}_0000.nii.gz"
+                    label = self.dataset_root / "labelsTr" / f"{sid}.nii.gz"
+                else:
+                    image = self.dataset_root / "imagesTs" / f"{sid}_0000.nii.gz"
+                    label = self.dataset_root / "labelsTs" / f"{sid}.nii.gz"
                 if image.exists() and label.exists():
                     records.append({"image": str(image), "label": str(label)})
         return records

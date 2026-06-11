@@ -10,7 +10,7 @@ model:
   res_block: true
 
 data:
-  data_root: /home/hank/medical_segmention/brain_data
+  dataset_root: /home/hank/medical_segmention/dataset
   splits_csv: /home/hank/medical_segmention/oasis1_splits.csv
   patch_size: [128, 128, 128]
   batch_size: 2
