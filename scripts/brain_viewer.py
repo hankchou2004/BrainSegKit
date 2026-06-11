@@ -71,7 +71,7 @@ matplotlib.rcParams.update({
 # ── paths ─────────────────────────────────────────────────────────────────────
 SPLIT        = args.split
 DATASET_ROOT = Path(args.dataset_root)
-FS_ROOT      = DATASET_ROOT / "freesurfer"
+FS_ROOT      = DATASET_ROOT / "oasis1_freesurfer"
 
 if SPLIT in ("train", "val"):
     image_dir = FS_ROOT / "imagesTr"
@@ -80,7 +80,7 @@ else:
     image_dir = FS_ROOT / "imagesTs"
     label_dir = FS_ROOT / "labelsTs"
 
-with open(DATASET_ROOT / "splits.json") as f:
+with open(DATASET_ROOT / "oasis1_freesurfer" / "splits.json") as f:
     split_ids: list[str] = json.load(f)["splits"][SPLIT]
 
 image_files = [str(image_dir / f"{sid}_0000.nii.gz") for sid in split_ids
