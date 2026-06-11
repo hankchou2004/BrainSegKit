@@ -1,0 +1,26 @@
+experiment:
+  name: dynunet_btcv
+  log_dir: ./logs
+
+model:
+  name: dynunet
+  in_channels: 1
+  out_channels: 14   # 0 background + 13 organs
+  deep_supervision: true
+  res_block: true
+
+data:
+  dataset: btcv
+  dataset_root: /home/hank/medical_segmention/dataset
+  splits_json: /home/hank/medical_segmention/dataset/btcv/splits.json
+  patch_size: [96, 96, 96]
+  spacing: [1.5, 1.5, 2.0]
+  batch_size: 2
+  num_workers: 4
+  cache_rate: 0.1
+
+training:
+  max_epochs: 500
+  lr: 1.0e-4
+  weight_decay: 1.0e-5
+  loss: dice_ce
