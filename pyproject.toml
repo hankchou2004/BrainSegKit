@@ -24,7 +24,7 @@ dependencies = [
 
 [project.optional-dependencies]
 umamba = ["mamba-ssm", "causal-conv1d"]
-sam    = ["segment-anything"]
+sam    = ["segment-anything @ git+https://github.com/facebookresearch/segment-anything.git"]
 nnunet = ["nnunetv2"]
 all    = ["medsegkit[umamba,sam,nnunet]"]
 
