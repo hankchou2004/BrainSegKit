@@ -198,15 +198,16 @@ python experiments/evaluate.py \
             mednext:logs/mednext_oasis1/best_model.ckpt
 ```
 
-### 5. 腦部影像視覺化
+### 5. 影像視覺化
 
 ```bash
 # 互動視窗（需本機 display / WSLg）
-python scripts/brain_viewer.py --split train
+python scripts/viewer.py --dataset oasis1 --split train
+python scripts/viewer.py --dataset btcv   --split val
 
 # SSH 無頭模式：存 PNG（不需要 display）
-python scripts/brain_viewer.py --save --case 0 --split train --save-dir ./viewer_out
-python scripts/brain_viewer.py --save --case 5 --split val   --save-dir ./viewer_out
+python scripts/viewer.py --dataset oasis1 --save --case 0 --save-dir ./viewer_out
+python scripts/viewer.py --dataset btcv   --save --case 3 --save-dir ./viewer_out
 ```
 
 視窗快捷鍵：
@@ -215,14 +216,32 @@ python scripts/brain_viewer.py --save --case 5 --split val   --save-dir ./viewer
 |------|------|
 | `← / →` | 切換 case |
 | `A / N` | 全部 labels 開 / 關 |
-| `H` | 切換 Hippocampus（左右） |
-| `V` | 切換 Ventricles |
-| `C` | 切換 Cortex（左右） |
+| `Click`（panel） | 切換單一 label |
+| `Scroll` | 縮放 |
+
+OASIS-1 快捷鍵：
+
+| 按鍵 | 功能 |
+|------|------|
+| `H` | Hippocampus（左右） |
+| `V` | Ventricles |
+| `C` | Cortex（左右） |
 | `1` | 只顯示 White Matter |
 | `2` | 只顯示 Gray Matter |
 | `3` | 只顯示 CSF / Ventricles |
-| `Scroll` | 縮放 |
-| `Click`（panel） | 切換單一 label |
+
+BTCV 快捷鍵：
+
+| 按鍵 | 功能 |
+|------|------|
+| `L` | Liver |
+| `S` | Spleen |
+| `K` | Kidneys（左右） |
+| `P` | Pancreas |
+| `A` | Aorta |
+| `1` | Solid organs（Spleen/Kidneys/Liver） |
+| `2` | Vascular（Aorta/IVC/Portal Vein） |
+| `3` | GI tract（Esophagus/Stomach/Gallbladder） |
 
 ### Python API
 
@@ -287,7 +306,7 @@ MedSegKit/
 │   └── evaluate.py               # 評估入口
 ├── scripts/
 │   ├── convert_dataset.py        # .mgz → nnUNet .nii.gz 轉換（OASIS-1）
-│   └── brain_viewer.py           # 腦部影像互動檢視器
+│   └── viewer.py                 # 通用影像檢視器（OASIS-1 / BTCV）
 └── pyproject.toml
 ```
 
