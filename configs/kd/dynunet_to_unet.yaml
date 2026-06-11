@@ -1,0 +1,29 @@
+experiment:
+  name: kd_dynunet2unet_oasis1
+  log_dir: ./logs
+
+kd:
+  type: response           # response | feature | contrastive | combined
+  kd_weight: 0.5
+  temperature: 4.0
+  teacher:
+    name: dynunet
+    ckpt: ./logs/dynunet_oasis1/best_model.ckpt
+  student:
+    name: unet
+    in_channels: 1
+    out_channels: 36
+
+data:
+  data_root: /home/hank/medical_segmention/brain_data
+  splits_csv: /home/hank/medical_segmention/oasis1_splits.csv
+  patch_size: [128, 128, 128]
+  batch_size: 2
+  num_workers: 4
+  cache_rate: 0.1
+
+training:
+  max_epochs: 300
+  lr: 1.0e-4
+  weight_decay: 1.0e-5
+  seg_loss: dice_ce
