@@ -24,8 +24,8 @@ import numpy as np
 
 BASE       = Path('/home/hank/medical_segmention')
 FS_ROOT    = BASE / 'brain_data' / 'oasis1_freesurfer'
-SPLITS_JSON = BASE / 'dataset' / 'splits.json'
-OUT_ROOT   = BASE / 'dataset' / 'freesurfer'
+SPLITS_JSON = BASE / 'dataset' / 'oasis1_freesurfer' / 'splits.json'
+OUT_ROOT   = BASE / 'dataset' / 'oasis1_freesurfer'
 
 
 # ── 工具函式 ────────────────────────────────────────────────────────────────
