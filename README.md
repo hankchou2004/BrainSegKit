@@ -219,14 +219,50 @@ python experiments/train.py --config configs/kd/dynunet_to_unet.yaml --mode kd
 ### 5. 多模型比較評估
 
 ```bash
+# OASIS-1：使用 test split（85 筆，有標籤）
 python experiments/evaluate.py \
     --config configs/unet.yaml \
     --ckpts unet:logs/unet_oasis1/best_model.ckpt \
             dynunet:logs/dynunet_oasis1/best_model.ckpt \
             mednext:logs/mednext_oasis1/best_model.ckpt
+
+# BTCV：自動改用 val split（6 筆有標籤；test split 20 筆無標籤）
+python experiments/evaluate.py \
+    --config configs/btcv_dynunet.yaml \
+    --ckpts dynunet:logs/dynunet_btcv/best_model.ckpt \
+            medsam:logs/medsam_btcv/best_model.ckpt
 ```
 
-### 6. 影像視覺化
+### 6. 推論（儲存預測結果）
+
+對無標籤資料（如 BTCV test split）或任意影像輸出分割遮罩 `.nii.gz`：
+
+```bash
+# BTCV test split（20 筆，無標籤，只能做推論）
+python experiments/inference.py \
+    --config configs/btcv_dynunet.yaml \
+    --ckpt   logs/dynunet_btcv/best_model.ckpt \
+    --split  test \
+    --out    ./predictions/btcv_test
+
+# 單一影像
+python experiments/inference.py \
+    --config configs/btcv_dynunet.yaml \
+    --ckpt   logs/dynunet_btcv/best_model.ckpt \
+    --image  /path/to/img0061.nii.gz \
+    --out    ./predictions
+
+# OASIS-1 val split
+python experiments/inference.py \
+    --config configs/unet.yaml \
+    --ckpt   logs/unet_oasis1/best_model.ckpt \
+    --split  val \
+    --out    ./predictions/oasis1_val
+```
+
+輸出命名：`{原始檔名}_pred.nii.gz`，保留重採樣後的 affine 矩陣。
+
+### 7. 影像視覺化
 
 ```bash
 # 互動視窗（需本機 display / WSLg）
@@ -343,12 +379,14 @@ MedSegKit/
 │   ├── btcv_medsam.yaml          # BTCV MedSAM（SAM ViT-B encoder）
 │   └── kd/dynunet_to_unet.yaml   # 知識蒸餾
 ├── experiments/
-│   ├── train.py                  # 訓練入口
-│   └── evaluate.py               # 評估入口
+│   ├── train.py                  # 訓練入口（依 data.dataset 自動選 DataModule）
+│   ├── evaluate.py               # 評估入口（BTCV 自動改用 val split）
+│   └── inference.py              # 推論入口（輸出 .nii.gz，支援無標籤 test split）
 ├── scripts/
 │   ├── convert_dataset.py        # .mgz → nnUNet .nii.gz 轉換（OASIS-1）
 │   └── viewer.py                 # 通用影像檢視器（OASIS-1 / BTCV）
-└── pyproject.toml
+├── pyproject.toml
+└── CLAUDE.md / SKILLS.md         # 每個子目錄均含：Claude Code 上下文 + 技能文件
 ```
 
 ---
