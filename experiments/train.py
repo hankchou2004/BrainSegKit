@@ -61,6 +61,7 @@ def train_seg(cfg: dict, gpus: int):
         lr=t_cfg.get("lr", 1e-4),
         weight_decay=t_cfg.get("weight_decay", 1e-5),
         patch_size=cfg["data"].get("patch_size", [128, 128, 128]),
+        num_classes=m_cfg.get("out_channels", 41),
     )
 
     _run(module, dm, cfg, gpus)

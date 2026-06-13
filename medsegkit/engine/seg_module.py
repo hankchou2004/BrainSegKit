@@ -52,7 +52,9 @@ class SegModule(L.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
-        self.model   = build_model(model_name, out_channels=num_classes, **model_kwargs)
+        # filter out_channels from model_kwargs to avoid duplicate keyword argument
+        _mkw = {k: v for k, v in model_kwargs.items() if k != "out_channels"}
+        self.model   = build_model(model_name, out_channels=num_classes, **_mkw)
         self.loss_fn = build_seg_loss(loss_name, **loss_kwargs)
 
         self.inferer = SlidingWindowInferer(
@@ -90,8 +92,13 @@ class SegModule(L.LightningModule):
         images, labels = batch["image"], batch["label"]
         preds = self(images)
 
-        # DynUNet deep supervision returns a list; average all scales
-        if isinstance(preds, (list, tuple)):
+        # DynUNet deep supervision (MONAI 1.5+) returns a 6-D tensor
+        # (B, num_supervision_levels, C, H, W, D); earlier versions return a list.
+        if preds.ndim == 6:
+            n = preds.shape[1]
+            loss = sum(self.loss_fn(preds[:, i], labels) for i in range(n)) / n
+            pred_main = preds[:, 0]
+        elif isinstance(preds, (list, tuple)):
             loss = sum(self.loss_fn(p, labels) for p in preds) / len(preds)
             pred_main = preds[0]
         else:
@@ -100,7 +107,7 @@ class SegModule(L.LightningModule):
 
         self.log("train/loss", loss, prog_bar=True, on_step=True, on_epoch=True)
 
-        # accumulate patch-level dice for epoch summary
+        # accumulate patch-level Dice for epoch summary
         with torch.no_grad():
             tp = [self._post_pred(p)  for p in decollate_batch(pred_main.detach())]
             tl = [self._post_label(l) for l in decollate_batch(labels)]
