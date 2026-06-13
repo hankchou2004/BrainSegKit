@@ -199,6 +199,7 @@ pip install git+https://github.com/facebookresearch/segment-anything.git
 
 ```bash
 cd /path/to/MedSegKit
+conda activate brain_segmention
 
 # OASIS-1 腦部分割（41 類）
 python experiments/train.py --config configs/unet.yaml
@@ -216,6 +217,21 @@ python experiments/train.py --config configs/btcv_medsam.yaml
 python experiments/train.py --config configs/kd/dynunet_to_unet.yaml --mode kd
 ```
 
+訓練過程會自動記錄以下指標至 TensorBoard（預設），用 `tensorboard --logdir logs/` 檢視：
+
+| 指標 | 說明 |
+|------|------|
+| `train/loss` | 訓練損失（每 step + 每 epoch） |
+| `train/dice` | 訓練 Dice（patch 級別，每 epoch 彙整） |
+| `val/loss` | 驗證損失（用於偵測 overfitting） |
+| `val/dice` | 驗證 Dice（sliding-window，完整體積） |
+| `val/hd95` | 驗證 Hausdorff Distance 95% |
+| `val/nsd` | 驗證 Normalized Surface Distance |
+| `lr` | Learning rate（CosineAnnealing） |
+
+若要改用 wandb，在 config 加 `experiment.logger: wandb`。  
+Checkpoint 存於 `logs/{experiment.name}/best_model.ckpt`（val/dice 最高時儲存）。
+
 ### 5. 多模型比較評估
 
 ```bash
@@ -231,6 +247,12 @@ python experiments/evaluate.py \
     --config configs/btcv_dynunet.yaml \
     --ckpts dynunet:logs/dynunet_btcv/best_model.ckpt \
             medsam:logs/medsam_btcv/best_model.ckpt
+
+# 加上 --per-class 印出各類別 Dice 明細
+python experiments/evaluate.py \
+    --config configs/btcv_dynunet.yaml \
+    --ckpts dynunet:logs/dynunet_btcv/best_model.ckpt \
+    --per-class
 ```
 
 ### 6. 推論（儲存預測結果）
