@@ -13,7 +13,7 @@ from __future__ import annotations
 import torch
 import lightning as L
 from monai.inferers import SlidingWindowInferer
-from monai.metrics import DiceMetric, HausdorffDistanceMetric, SurfaceDistanceMetric
+from monai.metrics import DiceMetric, HausdorffDistanceMetric
 from monai.transforms import AsDiscrete
 from monai.data import decollate_batch
 
@@ -71,10 +71,6 @@ class SegModule(L.LightningModule):
         self.hd95_metric = HausdorffDistanceMetric(
             include_background=False, percentile=95, reduction="mean"
         )
-        self.nsd_metric = SurfaceDistanceMetric(
-            include_background=False, reduction="mean"
-        )
-
         # train metric (patch-level, accumulated per epoch)
         self.train_dice_metric = DiceMetric(
             include_background=False, reduction="mean", get_not_nans=False
@@ -134,18 +130,14 @@ class SegModule(L.LightningModule):
 
         self.dice_metric(preds_list, labels_list)
         self.hd95_metric(preds_list, labels_list)
-        self.nsd_metric(preds_list, labels_list)
 
     def _log_metrics(self, prefix: str):
         dice = self.dice_metric.aggregate().item()
         hd95 = self.hd95_metric.aggregate().item()
-        nsd  = self.nsd_metric.aggregate().item()
         self.log(f"{prefix}/dice", dice, prog_bar=True)
         self.log(f"{prefix}/hd95", hd95, prog_bar=False)
-        self.log(f"{prefix}/nsd",  nsd,  prog_bar=False)
         self.dice_metric.reset()
         self.hd95_metric.reset()
-        self.nsd_metric.reset()
 
     def on_validation_epoch_end(self):
         self._log_metrics("val")

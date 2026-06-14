@@ -226,7 +226,6 @@ python experiments/train.py --config configs/kd/dynunet_to_unet.yaml --mode kd
 | `val/loss` | 驗證損失（用於偵測 overfitting） |
 | `val/dice` | 驗證 Dice（sliding-window，完整體積） |
 | `val/hd95` | 驗證 Hausdorff Distance 95% |
-| `val/nsd` | 驗證 Normalized Surface Distance |
 | `lr` | Learning rate（CosineAnnealing） |
 
 若要改用 wandb，在 config 加 `experiment.logger: wandb`。  
